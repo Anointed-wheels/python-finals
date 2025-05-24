@@ -1,0 +1,77 @@
+from rest_framework import serializers
+from authentication.models import CustomUser
+from django.contrib import auth
+# from utils.email import send_email
+from rest_framework.exceptions import AuthenticationFailed
+
+class SignupSerializer(serializers.ModelSerializer):
+    firstname= serializers.CharField(max_length= 255)
+    lastname= serializers.CharField(max_length= 255)
+    email= serializers.EmailField()
+    password= serializers.CharField(min_length= 8, max_length= 68, write_only= True)
+    gender= serializers.ChoiceField(choices=["MALE", "FEMALE"])
+    phone= serializers.CharField()
+    address= serializers.CharField()
+    nationality= serializers.CharField(required= False)
+    date_of_birth= serializers.DateField()
+    profile_picture= serializers.ImageField(required= False)
+    user_type= serializers.ChoiceField(choices=["CUSTOMER" ,"STAFF", "ADMIN", "OPERATORS"])
+    staff_role= serializers.ChoiceField(choices=["DRIVER", 'RIDER'], required= False, allow_blank=True, allow_null=True)
+    admin_secret = serializers.CharField(max_length= 14, required= False, allow_blank=True, allow_null=True)
+
+    def validate(self, attrs):
+        user_type = attrs.get('user_type')
+        staff_role = attrs.get('staff_role')
+        admin_secret = attrs.get('admin_secret')
+
+        if user_type == 'ADMIN' and not admin_secret:
+            raise serializers.ValidationError({'admin_secret': "This field is required for staff admin"})
+        if user_type != 'ADMIN' and admin_secret:
+            raise serializers.ValidationError({'admin_secret': "This field is only for staff admin, kindly change staff type"})
+        if user_type == "ADMIN" and admin_secret != "1234567890abcd":
+            raise serializers.ValidationError({"admin_secret": 'Invalid admin key'})
+        if user_type == 'STAFF' and not staff_role:
+            raise serializers.ValidationError({"staff_role": "This field is required for staff users."})
+
+        if user_type != 'STAFF' and staff_role:
+            raise serializers.ValidationError({"staff_role": "Only staff users can have a staff role."})
+
+        return attrs
+
+    class Meta:
+        model = CustomUser
+        fields = ['firstname', 'lastname', 'email', 'password', 'gender', 'phone', 'address', 'nationality', 'date_of_birth', 'profile_picture', 'user_type', "staff_role", "admin_secret"]
+
+    
+
+
+class LoginSerializer(serializers.ModelSerializer):
+    email= serializers.EmailField()
+    password= serializers.CharField(min_length= 8, max_length= 68, write_only= True)
+
+    class Meta:
+        model = CustomUser
+        fields= ['id', 'email', 'password', 'tokens']
+
+    def validate(self, attrs):
+        email= attrs.get('email').lower()
+        password= attrs.get('password')
+        user= CustomUser.objects.filter(email= email, password= password).first()
+        if not user:
+            raise AuthenticationFailed('invalid login credentials')
+            #send email
+        data = {
+            'to': user.email,
+            'subject': "LOGIN NOTIFICATIONT",
+            "body": "A new login was detected, if it is not you contact admin"
+        }
+        return {
+            'id': user.id,
+            'email': user.email,
+            'tokens': user.tokens
+        }
+
+
+        # fields = ['pickoff_location', 'dropoff_location','pickup_time', 'number_of_passangers',
+        #  'ride_type', 'ride_status', 'number_of_rides', 'special_request', 'payment_method'
+        # ]
