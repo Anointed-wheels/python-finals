@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from availability.serializers import AvailabilitySerializer 
+from availability.serializers import AvailabilitySerializer
 from rest_framework import views, status, generics
 from rest_framework.response import Response
 from authentication.models import CustomUser
@@ -7,11 +7,12 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import ListAPIView
 from availability.models import AvailabilityModel
+from availability.permissions import IsStaffUser
 # from booking.permissions import IsCustomerUser
 
 # Create your views here.
 class AvailabilityView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsStaffUser]
     serializer_class= AvailabilitySerializer
     def post(self, request):
         Serializer = self.serializer_class(data= request.data)

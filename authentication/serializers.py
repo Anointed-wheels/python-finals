@@ -3,6 +3,8 @@ from authentication.models import CustomUser
 from django.contrib import auth
 # from utils.email import send_email
 from rest_framework.exceptions import AuthenticationFailed
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import get_user_model
 
 class SignupSerializer(serializers.ModelSerializer):
     firstname= serializers.CharField(max_length= 255)
@@ -75,3 +77,43 @@ class LoginSerializer(serializers.ModelSerializer):
         # fields = ['pickoff_location', 'dropoff_location','pickup_time', 'number_of_passangers',
         #  'ride_type', 'ride_status', 'number_of_rides', 'special_request', 'payment_method'
         # ]
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    firstname= serializers.CharField(source= "user.firstname")
+    lastname= serializers.CharField(source="user.lastname", max_length= 255)
+    email= serializers.EmailField(source="user.email")
+    gender= serializers.ChoiceField(source="user.gender", choices=["MALE", "FEMALE"])
+    phone= serializers.CharField(source="user.phone")
+    address= serializers.CharField(source="user.address")
+    nationality= serializers.CharField(source="user.nationality", required= False)
+    date_of_birth= serializers.DateField(source="user.date_of_birth")
+    profile_picture= serializers.ImageField(source="user.profile_picture", required= False)
+    user_type= serializers.ChoiceField(source="user.user_type",choices=["CUSTOMER" ,"STAFF", "ADMIN", "OPERATORS"])
+    staff_role= serializers.ChoiceField(source="user.staff_role",choices=["DRIVER", 'RIDER'], required= False, allow_blank=True, allow_null=True)
+    class Meta:
+        model = CustomUser
+        fields = ['firstname', 'lastname', 'email','gender', 'phone', 'address', 'nationality', 'date_of_birth', 'profile_picture', 'user_type', "staff_role"]
+
+User = get_user_model()
+class ChangePasswordSerializer(serializers.Serializer):
+    confirm_former_password= serializers.CharField(min_length= 8, max_length= 68, write_only= True)
+    new_password= serializers.CharField(min_length= 8, max_length= 68, write_only= True)
+
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        old_password = attrs.get('confirm_former_password')
+
+        if not user.check_password(old_password):
+            raise AuthenticationFailed("Invalid current password")
+
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        new_password = self.validated_data['new_password']
+        user.set_password(new_password)
+        user.save()
+        return user
+
+        

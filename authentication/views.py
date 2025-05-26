@@ -1,7 +1,7 @@
 from django.shortcuts import render
-from rest_framework import views, status, generics
+from rest_framework import views, status, generics, permissions
 from rest_framework.response import Response
-from authentication.serializers import SignupSerializer, LoginSerializer
+from authentication.serializers import SignupSerializer, LoginSerializer, UserUpdateSerializer, ChangePasswordSerializer
 from authentication.models import CustomUser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -42,4 +42,32 @@ class LoginView(generics.GenericAPIView):
 
         return Response(data= Serializer.data, status= 201)
 
+class DeleteView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
 
+    def delete(self, request):
+        user = request.user
+        user.delete()
+        return Response({"detail": "User account deleted."}, status=status.HTTP_204_NO_CONTENT)
+
+class UpdateUserProfileView(generics.GenericAPIView):
+    serializer_class = UserUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
+        serializer = self.serializer_class(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Profile updated successfully.", "user": serializer.data}, status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
