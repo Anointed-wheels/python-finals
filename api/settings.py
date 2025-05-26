@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'booking',
     "availability",
+    "myadmin",
 ]
 
 MIDDLEWARE = [

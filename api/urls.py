@@ -39,5 +39,6 @@ urlpatterns = [
     # path('', include("user.urls")),
     path('authentication/', include("authentication.urls")),
     path('booking/', include("booking.urls")),
-    path('availability/', include('availability.urls'))
+    path('availability/', include('availability.urls')),
+    path('myadmin/', include('myadmin.urls'))
 ]
