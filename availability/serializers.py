@@ -3,7 +3,6 @@ from django.utils import timezone
 from authentication.models import CustomUser
 from availability.models import AvailabilityModel
 from django.contrib import auth
-from authentication.models import CustomUser
 # from utils.email import send_email
 from rest_framework.exceptions import AuthenticationFailed
 

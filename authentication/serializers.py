@@ -50,18 +50,23 @@ class SignupSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.ModelSerializer):
     email= serializers.EmailField()
     password= serializers.CharField(min_length= 8, max_length= 68, write_only= True)
+    is_active= serializers.BooleanField(source="user.is_active", read_only=True)
 
     class Meta:
         model = CustomUser
-        fields= ['id', 'email', 'password', 'tokens']
-
+        fields= ['id', 'email', 'password', 'tokens', "is_active"]
     def validate(self, attrs):
         email= attrs.get('email').lower()
         password= attrs.get('password')
+        is_active= attrs.get("is_active")
         user= CustomUser.objects.filter(email= email, password= password).first()
+
         if not user:
             raise AuthenticationFailed('invalid login credentials')
             #send email
+
+        if is_active== False:
+            raise AuthenticationFailed("Your account has been suspended!")
         data = {
             'to': user.email,
             'subject': "LOGIN NOTIFICATIONT",
@@ -115,5 +120,3 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(new_password)
         user.save()
         return user
-
-        
