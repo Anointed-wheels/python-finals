@@ -94,7 +94,7 @@ class PendingUser(models.Model):
             return False
         if not self.token_created_at:
             return False
-        return timezone.now() <= self.token_created_at + timedelta(minutes=5)
+        return timezone.now() <= self.token_created_at + timedelta(minutes=30)
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     id= models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
