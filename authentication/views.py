@@ -55,14 +55,12 @@ class ConfirmEmailView(generics.GenericAPIView):
         pending_user = serializer.validated_data["pending_user"]
         phone = pending_user.phone
 
-        # Check if user already exists
         if CustomUser.objects.filter(email=email).exists():
             return Response({"message": "Email already exists"}, status=400)
 
         if CustomUser.objects.filter(phone=phone).exists():
             return Response({"message": "Phone number already exists"}, status=400)
 
-        # Create the user
         user = serializer.save()
 
         return Response(

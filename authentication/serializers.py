@@ -178,20 +178,13 @@ class LoginSerializer(serializers.ModelSerializer):
         if not user.is_active:
             raise AuthenticationFailed('Your account has been suspended!')
 
-        # You could send login notification here using your utils.email function
-        # send_email(to=user.email, subject="LOGIN NOTIFICATION", body="...")
-
         return {
             'id': user.id,
             'email': user.email,
-            'tokens': user.tokens(),  # call the method
+            'tokens': user.tokens(),
         }
 
-
-        # fields = ['pickoff_location', 'dropoff_location','pickup_time', 'number_of_passangers',
-        #  'ride_type', 'ride_status', 'number_of_rides', 'special_request', 'payment_method'
-        # ]
-
+        
 class UserUpdateSerializer(serializers.ModelSerializer):
     firstname= serializers.CharField(source= "user.firstname")
     lastname= serializers.CharField(source="user.lastname", max_length= 255)

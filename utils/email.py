@@ -2,7 +2,7 @@ import random
 from django.core.mail import send_mail
 from django.utils import timezone
 
-ALLOWED_TOKEN_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # Custom set without confusing chars
+ALLOWED_TOKEN_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 TOKEN_LENGTH = 6
 
 def generate_token():

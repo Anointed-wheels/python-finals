@@ -19,5 +19,3 @@ class AvailabilityModel(models.Model):
     REQUIRED_FIELDS = [
         "is_available", "current_location",
     ]
-    def __str__(self):
-        return f'{self.name} by {self.owner.firstname} {self.owner.lastname}'
