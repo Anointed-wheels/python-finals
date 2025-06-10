@@ -81,7 +81,7 @@ class PendingUser(models.Model):
     nationality= models.CharField(max_length=100, null= True, blank= True)
     address= models.TextField(null= True, blank= True)
     profile_picture = models.ImageField(upload_to= "profile_picture/", null=True, blank=True)
-    user_type= models.CharField(choices= USER_TYPE, max_length=9, default=USER_TYPE[0][0])
+    user_type= models.CharField(choices= USER_TYPE, max_length=9, default=USER_TYPE[1][0])
     staff_role = models.CharField(max_length=20, choices=STAFF_ROLES, null=True, blank=True)
     admin_secret = models.CharField(max_length= 14, null=True, blank= True)
     password = models.CharField(max_length=128, null= True, blank= True)
@@ -96,12 +96,29 @@ class PendingUser(models.Model):
             return False
         return timezone.now() <= self.token_created_at + timedelta(minutes=30)
 
-class CustomUser(AbstractBaseUser, PermissionsMixin):
+class PendingStaff(models.Model):
     id= models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email= models.EmailField(max_length=255, unique=True)
     firstname= models.CharField(max_length=100)
     lastname= models.CharField(max_length=100)
     date_of_birth= models.DateField()
+    phone= models.CharField(max_length= 15, unique= True)
+    gender= models.CharField(max_length=6, choices=GENDER_CHOICES )
+    nationality= models.CharField(max_length=100, null= True, blank= True)
+    address= models.TextField(null= True, blank= True)
+    profile_picture = models.ImageField(upload_to= "profile_picture/", null=True, blank=True)
+    user_type= models.CharField(choices= USER_TYPE, max_length=9, default=USER_TYPE[0][0])
+    staff_role = models.CharField(max_length=20, choices=STAFF_ROLES, null=True, blank=True)
+    admin_secret = models.CharField(max_length= 14, null=True, blank= True)
+    password = models.CharField(max_length=128, null= True, blank= True)
+    created_at= models.DateTimeField(auto_now_add= True)
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    id= models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email= models.EmailField(max_length=255, unique=True)
+    firstname= models.CharField(max_length=100)
+    lastname= models.CharField(max_length=100)
+    date_of_birth= models.DateField(null= True, blank= True)
     phone= models.CharField(max_length= 15, unique= True)
     gender= models.CharField(max_length=6, choices=GENDER_CHOICES )
     nationality= models.CharField(max_length=100, null= True, blank= True)

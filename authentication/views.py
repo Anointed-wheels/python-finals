@@ -54,6 +54,7 @@ class ConfirmEmailView(generics.GenericAPIView):
         email = serializer.validated_data.get("email")
         pending_user = serializer.validated_data["pending_user"]
         phone = pending_user.phone
+        user_type = pending_user.user_type
 
         if CustomUser.objects.filter(email=email).exists():
             return Response({"message": "Email already exists"}, status=400)
@@ -62,6 +63,10 @@ class ConfirmEmailView(generics.GenericAPIView):
             return Response({"message": "Phone number already exists"}, status=400)
 
         user = serializer.save()
+
+        if user_type in ["STAFF", "ADMIN"]:
+            return Response({"message": "Email confirmed. Awaiting admin approval."}, status=status.HTTP_202_ACCEPTED)
+
 
         return Response(
             {"message": "Email confirmed successfully. You can now log in."},
@@ -117,7 +122,7 @@ class UpdateUserProfileView(generics.GenericAPIView):
 
     def patch(self, request):
         user = request.user
-        serializer = self.serializer_class(user, data=request.data)
+        serializer = self.serializer_class(instance = user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Profile updated successfully.", "user": serializer.data}, status=status.HTTP_200_OK)

@@ -15,7 +15,7 @@ class AvailabilityView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsStaffUser]
     serializer_class= AvailabilitySerializer
     def post(self, request):
-        Serializer = self.serializer_class(data= request.data)
+        Serializer = self.serializer_class(instance = user, partial=True, data= request.data)
         Serializer.is_valid(raise_exception=True)
         Serializer.save(user=request.user)
         return Response(data= Serializer.data, status=status.HTTP_201_CREATED)

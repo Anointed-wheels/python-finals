@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from authentication.models import CustomUser, PendingUser
+from authentication.models import CustomUser, PendingUser, PendingStaff
 from django.contrib import auth
 # from utils.email import send_email
 from rest_framework.exceptions import AuthenticationFailed
@@ -41,25 +41,6 @@ class ConfirmEmailSerializer(serializers.Serializer):
     token = serializers.CharField()
 
     def validate(self, attrs):
-        user_type = attrs.get('user_type')
-        staff_role = attrs.get('staff_role')
-        admin_secret = attrs.get('admin_secret')
-
-        if user_type == 'ADMIN' and not admin_secret:
-            raise serializers.ValidationError({'admin_secret': "This field is required for staff admin"})
-        if user_type != 'ADMIN' and admin_secret:
-            raise serializers.ValidationError({'admin_secret': "This field is only for staff admin, kindly change staff type"})
-        if user_type == "ADMIN" and admin_secret != "1234567890abcd":
-            raise serializers.ValidationError({"admin_secret": 'Invalid admin key'})
-        if user_type == 'STAFF' and not staff_role:
-            raise serializers.ValidationError({"staff_role": "This field is required for staff users."})
-
-        if user_type != 'STAFF' and staff_role:
-            raise serializers.ValidationError({"staff_role": "Only staff users can have a staff role."})
-
-        return attrs
-
-    def validate(self, attrs):
         email = attrs.get("email")
         token = attrs.get("token")
 
@@ -71,6 +52,7 @@ class ConfirmEmailSerializer(serializers.Serializer):
         if not pending_user.is_token_valid(token):
             raise serializers.ValidationError("Invalid or expired token.")
 
+        # Validate staff/admin fields
         user_type = pending_user.user_type
         staff_role = pending_user.staff_role
         admin_secret = pending_user.admin_secret
@@ -89,30 +71,48 @@ class ConfirmEmailSerializer(serializers.Serializer):
         attrs["pending_user"] = pending_user
         return attrs
 
+    def save(self):
+        pending_user = self.validated_data["pending_user"]
+        user_type = pending_user.user_type
 
-    def create(self, validated_data):
-        pending_user = validated_data["pending_user"]
+        if user_type in ["STAFF", "ADMIN"]:
+            # Save to PendingStaff instead of CustomUser
+            PendingStaff.objects.create(
+                email=pending_user.email,
+                firstname=pending_user.firstname,
+                lastname=pending_user.lastname,
+                date_of_birth=pending_user.date_of_birth,
+                phone=pending_user.phone,
+                gender=pending_user.gender,
+                nationality=pending_user.nationality,
+                address=pending_user.address,
+                profile_picture=pending_user.profile_picture,
+                user_type=pending_user.user_type,
+                staff_role=pending_user.staff_role,
+                admin_secret=pending_user.admin_secret,
+                password=pending_user.password,
+            )
+        else:
+            # Save to CustomUser
+            user = CustomUser.objects.create(
+                email=pending_user.email,
+                firstname=pending_user.firstname,
+                lastname=pending_user.lastname,
+                date_of_birth=pending_user.date_of_birth,
+                phone=pending_user.phone,
+                gender=pending_user.gender,
+                nationality=pending_user.nationality,
+                address=pending_user.address,
+                profile_picture=pending_user.profile_picture,
+                user_type=pending_user.user_type,
+                is_verified=True,
+            )
+            user.password = pending_user.password
+            user.save()
 
-        user = CustomUser.objects.create(
-            email=pending_user.email,
-            firstname=pending_user.firstname,
-            lastname=pending_user.lastname,
-            date_of_birth=pending_user.date_of_birth,
-            phone=pending_user.phone,
-            gender=pending_user.gender,
-            nationality=pending_user.nationality,
-            address=pending_user.address,
-            profile_picture=pending_user.profile_picture,
-            user_type=pending_user.user_type,
-            staff_role=pending_user.staff_role,
-            admin_secret=pending_user.admin_secret,
-            is_verified=True,
-        )
-        user.password = pending_user.password
-        user.save()
-         
+        # Remove from pending table
         pending_user.delete()
-        return user
+        return None
 
 # class SignupSerializer(serializers.ModelSerializer):
 #     firstname= serializers.CharField(max_length= 255)
