@@ -15,34 +15,32 @@ class CreateUserView(generics.GenericAPIView):
 
     def post(self, request):
         email = request.data.get("email")
+        phone = request.data.get("phone")
+        if CustomUser.objects.filter(email=email).exists():
+            return Response({"message": "Email already exists"}, status=400)
+
+        if CustomUser.objects.filter(phone=phone).exists():
+            return Response({"message": "Phone number already exists"}, status=400)
         try:
             pending_user = PendingUser.objects.get(email=email)
-            token = generate_token()
-            pending_user.token = token
-            pending_user.token_created_at = timezone.now()
-            pending_user.save()
-            send_token_email(pending_user.email, token)
-
-            return Response(
-                {"message": "Verification token re-sent to your email."},
-                status=status.HTTP_200_OK
-            )
+            msg= {"message": "Verification token re-sent to your email."}
         except PendingUser.DoesNotExist:
             serializer = self.serializer_class(data=request.data)
             serializer.is_valid(raise_exception=True)
             pending_user = serializer.save()
+            msg = {"message": "Please confirm your email to complete registration."}
 
-            token = generate_token()
-            pending_user.token = token
-            pending_user.token_created_at = timezone.now()
-            pending_user.save()
+        token = generate_token()
+        pending_user.token = token
+        pending_user.token_created_at = timezone.now()
+        pending_user.save()
 
-            send_token_email(pending_user.email, token)
+        send_token_email(pending_user.email, token)
 
-            return Response(
-                {"message": "Please confirm your email to complete registration."},
-                status=status.HTTP_201_CREATED
-            )
+        return Response(
+            msg,
+            status=status.HTTP_201_CREATED
+        )
 
 class ConfirmEmailView(generics.GenericAPIView):
     serializer_class = ConfirmEmailSerializer
@@ -55,12 +53,6 @@ class ConfirmEmailView(generics.GenericAPIView):
         pending_user = serializer.validated_data["pending_user"]
         phone = pending_user.phone
         user_type = pending_user.user_type
-
-        if CustomUser.objects.filter(email=email).exists():
-            return Response({"message": "Email already exists"}, status=400)
-
-        if CustomUser.objects.filter(phone=phone).exists():
-            return Response({"message": "Phone number already exists"}, status=400)
 
         user = serializer.save()
 

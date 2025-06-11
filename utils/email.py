@@ -20,7 +20,7 @@ def send_token_email(email, token):
 def send_activation(email, firstname):
     send_mail(
         subject="Account Approved",
-        message=f"Dear {firstname}, Your account has been approved by the admin. You can now log in. Thank you.",
+        message=f"Dear {user.firstname}, Your account has been approved by the admin. You can now log in. Thank you.",
         from_email="no-reply@example.com",
         recipient_list=[email],
         fail_silently=False,

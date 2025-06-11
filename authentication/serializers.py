@@ -75,7 +75,7 @@ class ConfirmEmailSerializer(serializers.Serializer):
         pending_user = self.validated_data["pending_user"]
         user_type = pending_user.user_type
 
-        if user_type in ["STAFF", "ADMIN"]:
+        if user_type in ["STAFF", "ADMIN", "OPERATORS"]:
             # Save to PendingStaff instead of CustomUser
             PendingStaff.objects.create(
                 email=pending_user.email,
