@@ -64,7 +64,7 @@ class ConfirmEmailView(generics.GenericAPIView):
 
         user = serializer.save()
 
-        if user_type in ["STAFF", "ADMIN"]:
+        if user_type in ["STAFF", "ADMIN", "OPERATORS"]:
             return Response({"message": "Email confirmed. Awaiting admin approval."}, status=status.HTTP_202_ACCEPTED)
 
 
