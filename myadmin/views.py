@@ -6,9 +6,11 @@ from authentication.models import *
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import ListAPIView
+from authentication.serializers import PendingStaffSerializer
 # from admin.models import AdminModel
 from myadmin.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
+from utils.email import send_activation
 
 
 # Create your views here.
@@ -83,9 +85,16 @@ class ApprovePendingStaffView(APIView):
         user.password = pending_staff.password
         user.save()
 
+        send_activation(user.email, user.firstname)
+
         pending_staff.delete()
 
         return Response(
             {"message": f"{user.user_type} account for {user.email} approved and activated."},
             status=status.HTTP_201_CREATED
         )
+
+class PendingStaffListView(ListAPIView):
+    queryset = PendingStaff.objects.all()
+    serializer_class = PendingStaffSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]

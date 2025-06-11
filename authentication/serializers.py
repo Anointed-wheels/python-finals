@@ -222,3 +222,9 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(new_password)
         user.save()
         return user
+
+class PendingStaffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PendingStaff
+        fields = ['firstname', 'lastname', 'email','gender', 'phone',
+         'address', 'nationality', 'date_of_birth', 'profile_picture', 'user_type', "staff_role"]
