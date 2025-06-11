@@ -11,6 +11,7 @@ from authentication.serializers import PendingStaffSerializer
 from myadmin.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
 from utils.email import send_activation
+from django.db import transaction
 
 
 # Create your views here.
@@ -64,35 +65,34 @@ class ApprovePendingStaffView(APIView):
         # Check if already exists in CustomUser
         if CustomUser.objects.filter(email=email).exists():
             return Response({"error": "User already exists in system"}, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            # Create user in CustomUser
+            user = CustomUser.objects.create(
+                email=pending_staff.email,
+                firstname=pending_staff.firstname,
+                lastname=pending_staff.lastname,
+                date_of_birth=pending_staff.date_of_birth,
+                phone=pending_staff.phone,
+                gender=pending_staff.gender,
+                nationality=pending_staff.nationality,
+                address=pending_staff.address,
+                profile_picture=pending_staff.profile_picture,
+                user_type=pending_staff.user_type,
+                staff_role=pending_staff.staff_role,
+                admin_secret=pending_staff.admin_secret,
+                is_verified=True,
+                is_active=True,
+            )
+            user.password = pending_staff.password
+            user.save()
+            pending_staff.delete()
+            send_activation(user.email, user.firstname)
 
-        # Create user in CustomUser
-        user = CustomUser.objects.create(
-            email=pending_staff.email,
-            firstname=pending_staff.firstname,
-            lastname=pending_staff.lastname,
-            date_of_birth=pending_staff.date_of_birth,
-            phone=pending_staff.phone,
-            gender=pending_staff.gender,
-            nationality=pending_staff.nationality,
-            address=pending_staff.address,
-            profile_picture=pending_staff.profile_picture,
-            user_type=pending_staff.user_type,
-            staff_role=pending_staff.staff_role,
-            admin_secret=pending_staff.admin_secret,
-            is_verified=True,
-            is_active=True,
-        )
-        user.password = pending_staff.password
-        user.save()
-
-        send_activation(user.email, user.firstname)
-
-        pending_staff.delete()
-
-        return Response(
-            {"message": f"{user.user_type} account for {user.email} approved and activated."},
-            status=status.HTTP_201_CREATED
-        )
+            return Response(
+                {"message": f"{user.user_type} account for {user.email} approved and activated."},
+                status=status.HTTP_201_CREATED
+            )
+        
 
 class PendingStaffListView(ListAPIView):
     queryset = PendingStaff.objects.all()
